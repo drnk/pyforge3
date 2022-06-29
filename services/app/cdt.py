@@ -1,12 +1,18 @@
 import click
+import logging
 import requests
+import os
+
+from sqlalchemy import create_engine
+
+from .models import CompoundSummary
 
 
 SUPPORTED_COMPOUNDS = (
     'ADP', 'ATP', 'STI', 'ZID', 'DPM', 'XP9', '18W', '29P'
 )
 
-EBI_COMPOUND_SUMMARY_URL = 'https://www.ebi.ac.uk/pdbe/graph-api/compound/summary/{compound}'
+EBI_COMPOUND_SUMMARY_URL = 'https://www.ebi.ac.uk/pdbe/graph-api/compound/summary/{hetcode}'
 
 
 def parse_compound_summary(data):
@@ -24,15 +30,40 @@ def parse_compound_summary(data):
     return res
 
 
-def get_compound_summary(compound):
+def get_compound_summary(compound: str) -> dict:
+    """Downloads compound summary info from PDB (Protein Data Bank) API
 
+    For the reference:
+        https://www.ebi.ac.uk/pdbe/graph-api/pdbe_doc/#api-Compounds-GetCompoundSummary
+    
+    Args:
+        compound: hetcode of the compound 
+    
+    Returns:
+        dict object with following keys:
+            compound - Hetcode of the compound.
+            name - The name of the chemical component.
+            formula - The chemical formula of the component.
+            inchi - The full INCHI of the component.
+            inchi_key - INCHI key of the component.
+            smiles - The SMILES representation of the component
+                (could be multiple).
+            cross_links_count - Quantity of cross references for this
+                chemical component from other resources.
+    
+    Raises:
+        ValueError: if 'compound' is not supported
+        RuntimeError: if wearn't able to retreive information from 
+            public API 
+
+    """
     compound = compound.upper().strip()
 
     if not compound in SUPPORTED_COMPOUNDS:
-        raise RuntimeError(f"Compound '{compound}' is not supported yet. "\
+        raise ValueError(f"Compound '{compound}' is not supported yet. "\
             f"Please try supported ones: {str(SUPPORTED_COMPOUNDS)}")
 
-    url = EBI_COMPOUND_SUMMARY_URL.format(compound=compound)
+    url = EBI_COMPOUND_SUMMARY_URL.format(hetcode=compound)
     r = requests.get(url)
     if r.status_code != 200:
         raise RuntimeError(f"Something goes wrong while retreiving "\
@@ -56,19 +87,41 @@ def prepare_compound_info(data):
     return s
 
 
+class Storage(object):
+    def __init__(self, debug=False):
+        self.debug = debug
+
+        pgconnect_string = os.environ('DATABASE_URL')
+        # "postgresql://cdt:cdt@localhost:5432/compound_data_tool"
+        self.engine = create_engine(pgconnect_string)
+
+    def _create_db(self):
+        ...
+
+    def save(self, data: CompoundSummary):
+        """Saving compound summary to database"""
+        logging.debug(f"Saving {data} to the database")
+
+# prepare decorator via click to pass Storage
+# instance as a context object to the commands
+pass_storage = click.make_pass_decorator(Storage)
+
+
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enables verbose mode.")
 @click.version_option("1.0")
-def cli(verbose):
+@click.pass_context
+def cli(ctx, verbose):
     """Compound-data-tool or CDT is a command line tool allows you to actualize
     the information about compounds.
 
     """
-    pass
+    ctx.obj = Storage()
 
 @cli.command()
 @click.argument("compound")
-def actualize(compound):
+@pass_storage
+def actualize(storage, compound):
     """Actualizing compound data from the open source APIs.
 
     This will retreive the information from www.ebi.ac.uk database and store it 
@@ -87,9 +140,25 @@ def actualize(compound):
     for s in prepare_compound_info(data):
         click.echo(s)
 
+    # storing the info to database
+    summary = CompoundSummary(data)
+    storage.save(summary)
+
 @cli.command()
 def supported():
     """Information about supported compounds."""
     click.echo("Next compounds are supported by cdt:")
     for compound in SUPPORTED_COMPOUNDS:
         click.echo('  ' + compound)
+
+
+@cli.command()
+@click.argument("compound")
+@click.option(
+    "--full",
+    default=False,
+    help="Do not cut information in output. Not enabled by default.",
+)
+@pass_storage
+def show(storage, compound, full):
+    logging.info(f"Showing the summary data for {compound}")
