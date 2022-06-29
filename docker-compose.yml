@@ -4,7 +4,7 @@ services:
   cli:
     container_name: cdt
     build: ./services/app
-    command: /bin/bash
+    #command: /bin/bash
     volumes:
       - ./services/app/:/home/app/
     env_file:
