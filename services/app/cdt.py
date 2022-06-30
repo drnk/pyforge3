@@ -1,11 +1,8 @@
 import click
 import logging
 import requests
-import os
 
-from sqlalchemy import create_engine
-
-from .models import CompoundSummary
+from storage import CompoundSummary, Storage
 
 
 SUPPORTED_COMPOUNDS = (
@@ -15,7 +12,10 @@ SUPPORTED_COMPOUNDS = (
 EBI_COMPOUND_SUMMARY_URL = 'https://www.ebi.ac.uk/pdbe/graph-api/compound/summary/{hetcode}'
 
 
-def parse_compound_summary(data):
+def parse_compound_summary(data: dict) -> dict:
+    """Receives 'data' as a json with a lot of data and response
+    with necessary subset of data keys + add some calculations.
+    """
     res = dict()
     res['compound'] = tuple(data.keys())[0]
 
@@ -70,8 +70,11 @@ def get_compound_summary(compound: str) -> dict:
             f"information via url: {url}")
 
     return parse_compound_summary(r.json())
-    
+
+
 def prepare_compound_info(data):
+    """Prepare ANSI representation of CompoundSummary data"""
+
     C1_WIDTH = 17
     C2_WIDTH = 13
 
@@ -86,21 +89,6 @@ def prepare_compound_info(data):
     s.append('-'*(2 + C1_WIDTH + 3 + C2_WIDTH + 2))
     return s
 
-
-class Storage(object):
-    def __init__(self, debug=False):
-        self.debug = debug
-
-        pgconnect_string = os.environ('DATABASE_URL')
-        # "postgresql://cdt:cdt@localhost:5432/compound_data_tool"
-        self.engine = create_engine(pgconnect_string)
-
-    def _create_db(self):
-        ...
-
-    def save(self, data: CompoundSummary):
-        """Saving compound summary to database"""
-        logging.debug(f"Saving {data} to the database")
 
 # prepare decorator via click to pass Storage
 # instance as a context object to the commands
@@ -141,7 +129,7 @@ def actualize(storage, compound):
         click.echo(s)
 
     # storing the info to database
-    summary = CompoundSummary(data)
+    summary = CompoundSummary(**data)
     storage.save(summary)
 
 @cli.command()

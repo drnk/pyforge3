@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   cli:
-    container_name: cdt
+    #container_name: cdt
     build: ./services/app
     command: /bin/bash
     volumes:
@@ -11,17 +11,27 @@ services:
       - ./.env.dev
     depends_on:
       - db
+    links:
+      - db:db
+    networks:
+      - appnetwork
   db:
-    container_name: postgres
+    #container_name: postgres
     image: postgres:14-alpine
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=cdt
       - POSTGRES_PASSWORD=cdt
       - POSTGRES_DB=compound_data_tools
+    networks:
+      - appnetwork
 
 volumes:
   postgres_data:
+
+networks:
+  appnetwork:
+    driver: bridge
