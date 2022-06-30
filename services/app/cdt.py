@@ -150,3 +150,11 @@ def supported():
 @pass_storage
 def show(storage, compound, full):
     logging.info(f"Showing the summary data for {compound}")
+    compound = compound.strip().upper()
+    data = storage.get(compound)
+    if not data:
+        click.echo(f"We don't have a local copy of the {compound} summary.")
+        click.echo(f"Run `cdt actualize {compound}` once to obtain the info.")
+    else:
+        for s in prepare_compound_info(data):
+            click.echo(s)

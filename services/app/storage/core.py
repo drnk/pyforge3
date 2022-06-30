@@ -1,11 +1,19 @@
 import logging
 import os
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
 from .models import CompoundSummary
+
+
+def row2dict(row):
+    d = {}
+    for column in row.__table__.c:
+        d[column.name] = str(getattr(row, column.name))
+
+    return d
 
 
 class Storage(object):
@@ -29,12 +37,35 @@ class Storage(object):
             create_database(self.engine.url)
 
         Base = declarative_base()
-        Base.metadata.drop_all()
-        Base.metadata.create_all()
+        # Base.metadata.drop_all()
+        # Base.metadata.create_all()
 
-    def save(self, summary: CompoundSummary):
+        table_name = CompoundSummary.__tablename__
+        eng = self.engine
+
+        table_exists = inspect(eng).has_table(table_name)
+        if not table_exists:  # If table don't exist, Create.
+            logging.debug(f"Creating database tables "\
+                f"because {table_name} doesn't exists.")
+            Base.metadata.create_all(eng, tables=[CompoundSummary.__table__])
+    
+    def save(self, summary: CompoundSummary) -> None:
         """Saving compound summary to database"""
         logging.debug(f"Saving {summary} to the database")
         with self.Session() as sess:
             sess.add(summary)
             sess.commit()
+
+    def get(self, compound: str) -> CompoundSummary:
+        stmt = select(CompoundSummary).\
+            where(CompoundSummary.compound == compound)
+        with self.Session() as sess:
+            row = sess.scalars(stmt).first()
+            
+            if row:
+                return row2dict(row)
+            else:
+                return None
+
+        
+

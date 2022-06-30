@@ -23,3 +23,4 @@ class CompoundSummary(Base):
 
     def __str__(self):
         return f"CompoundSummary({self.compound})"
+
