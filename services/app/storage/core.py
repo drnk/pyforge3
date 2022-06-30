@@ -3,6 +3,7 @@ import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy_utils import database_exists, create_database
 
 from .models import CompoundSummary
 
@@ -23,6 +24,10 @@ class Storage(object):
         logging.debug(f"Session object initiated: {self.Session}")
 
     def _create_db(self):
+        if not database_exists(self.engine.url):
+            logging.info('Creating database...')
+            create_database(self.engine.url)
+
         Base = declarative_base()
         Base.metadata.drop_all()
         Base.metadata.create_all()
