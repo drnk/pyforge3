@@ -53,7 +53,7 @@ class Storage(object):
         """Saving compound summary to database"""
         logging.debug(f"Saving {summary} to the database")
         with self.Session() as sess:
-            sess.add(summary)
+            sess.merge(summary)
             sess.commit()
 
     def get(self, compound: str) -> CompoundSummary:
