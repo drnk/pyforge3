@@ -14,9 +14,6 @@ WORKDIR /usr/src/app
 RUN useradd --shell /bin/bash app
 RUN chown app:app -R .
 
-#RUN python -m venv .venv
-#RUN . /usr/src/app/.venv/bin/activate
-
 # upgrade pip and install the dependencies
 RUN python -m pip install --upgrade pip
 COPY ./requirements.txt /usr/src/app/requirements.txt
@@ -31,4 +28,4 @@ RUN pip install --editable .
 USER app
 
 ENTRYPOINT ["bash"]
-CMD ["./entrypoint.sh"]
+#CMD ["./entrypoint.sh"]

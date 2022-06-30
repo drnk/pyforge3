@@ -2,17 +2,14 @@ version: "3.8"
 
 services:
   cli:
-    #container_name: cdt
+    container_name: cli
     build: ./services/app
-    #command: /bin/bash
     volumes:
       - ./services/app/:/home/app/
     env_file:
       - ./.env.dev
     depends_on:
       - db
-    links:
-      - db:db
     networks:
       - appnetwork
   db:
@@ -25,7 +22,7 @@ services:
     environment:
       - POSTGRES_USER=cdt
       - POSTGRES_PASSWORD=cdt
-      - POSTGRES_DB=compound_data_tools
+      - POSTGRES_DB=compound_data_tool
     networks:
       - appnetwork
 

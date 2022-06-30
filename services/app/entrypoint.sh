@@ -1,10 +1,11 @@
 #!/bin/bash
-if [ "$DATABASE" = "postgres" ]
+if [[ "$DATABASE_URL" == postgres* ]] ;
 then
     echo "Waiting for postgres..."
 
     while ! nc -z $SQL_HOST $SQL_PORT; do
-      sleep 0.1
+        >&2 echo "Postgres db is unavailable - sleeping..."
+        sleep 1
     done
 
     echo "PostgreSQL started"
