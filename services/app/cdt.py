@@ -13,8 +13,13 @@ EBI_COMPOUND_SUMMARY_URL = 'https://www.ebi.ac.uk/pdbe/graph-api/compound/summar
 
 
 def parse_compound_summary(data: dict) -> dict:
-    """Receives 'data' as a json with a lot of data and response
-    with necessary subset of data keys + add some calculations.
+    """Filters summary data to leave the necessary only.
+
+    Args:
+        data: dictionary of compound summary information
+
+    Returns:
+        dict with necessary compound information
     """
     res = dict()
     res['compound'] = tuple(data.keys())[0]
@@ -29,6 +34,25 @@ def parse_compound_summary(data: dict) -> dict:
 
     return res
 
+def is_compound_supported(hetcode: str) -> bool:
+    """Check if compound supported by `cdt`
+    
+    Args:
+        hetcode: string code of compound
+        
+    Returns:
+        True is supported and False if not
+    """
+    return hetcode in SUPPORTED_COMPOUNDS
+
+def not_supported_info(hetcode: str) -> None:
+    """Printing into terminal warning about unsupported compound.
+    
+    Args:
+        hetcode: string code of compound
+    """
+    click.echo(click.style(f"Compound {hetcode} is not supported", bg='red', fg='white'))
+    click.echo(f"Supported compounds are: {', '.join(SUPPORTED_COMPOUNDS)}")
 
 def get_compound_summary(compound: str) -> dict:
     """Downloads compound summary info from PDB (Protein Data Bank) API
@@ -59,7 +83,7 @@ def get_compound_summary(compound: str) -> dict:
     """
     compound = compound.upper().strip()
 
-    if not compound in SUPPORTED_COMPOUNDS:
+    if not is_compound_supported(compound):
         raise ValueError(f"Compound '{compound}' is not supported yet. "\
             f"Please try supported ones: {str(SUPPORTED_COMPOUNDS)}")
 
@@ -72,9 +96,15 @@ def get_compound_summary(compound: str) -> dict:
     return parse_compound_summary(r.json())
 
 
-def prepare_compound_info(data):
-    """Prepare ANSI representation of CompoundSummary data"""
-
+def prepare_compound_info(data: dict) -> list:
+    """Prepare ANSI representation of CompoundSummary data.
+    
+    Args:
+        data: compound summary dictionary
+        
+    Returns:
+        list of strings to print in ASCII manner into terminal
+    """
     C1_WIDTH = 17
     C2_WIDTH = 13
 
@@ -94,7 +124,6 @@ def prepare_compound_info(data):
 # instance as a context object to the commands
 pass_storage = click.make_pass_decorator(Storage)
 
-
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enables verbose mode.")
 @click.version_option("1.0")
@@ -103,8 +132,11 @@ def cli(ctx, verbose):
     """Compound-data-tool or CDT is a command line tool allows you to actualize
     the information about compounds.
 
+    Args:
+        ctx: click context (passed automatically by click)
+        verbose: boolean value of additional output necessity
     """
-    ctx.obj = Storage()
+    ctx.obj = Storage(debug=verbose)
 
 @cli.command()
 @click.argument("compound")
@@ -116,11 +148,14 @@ def actualize(storage, compound):
     locally for further use.
 
     Supported compounds are: ADP, ATP, STI, ZID, DPM, XP9, 18W, 29P
+
+    Args:
+        storage: context instance of Storage object
+        compound: string code of compound
     """
     compound = compound.upper().strip()
-    if not compound in SUPPORTED_COMPOUNDS:
-        click.echo(click.style(f"Compound {compound} is not supported", bg='red', fg='white'))
-        click.echo(f"Supported compounds are: {', '.join(SUPPORTED_COMPOUNDS)}")
+    if not is_compound_supported(compound):
+        not_supported_info(compound)
         return
 
     data = get_compound_summary(compound)
@@ -150,7 +185,12 @@ def supported():
 @pass_storage
 def show(storage, compound, full):
     logging.info(f"Showing the summary data for {compound}")
-    compound = compound.strip().upper()
+    
+    compound = compound.upper().strip()
+    if not is_compound_supported(compound):
+        not_supported_info(compound)
+        return
+
     data = storage.get(compound)
     if not data:
         click.echo(f"We don't have a local copy of the {compound} summary.")
