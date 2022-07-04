@@ -8,6 +8,6 @@ setup(
     install_requires=["click"],
     entry_points="""
         [console_scripts]
-        cdt=cdt:cli
+        cdt=src.cdt:cli
     """,
 )
