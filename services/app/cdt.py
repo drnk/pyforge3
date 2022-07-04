@@ -147,8 +147,6 @@ def prepare_compound_info(data: dict, full: bool = False) -> list:
             is_first = True
             for part in chunked(val, C2_WIDTH):
                 name = k if is_first else ''
-                logging.debug(f"Name = {name}, {type(name)}")
-                logging.debug(f"Part = {part}, {type(part)}")
                 s.append(TMP.format(name, ''.join(part)))
                 
                 if is_first:
@@ -180,23 +178,23 @@ def cli(ctx, verbose):
 @cli.command()
 @click.argument("compound")
 @click.option(
-    '--short/--full',
+    '--full',
+    is_flag=True,
     default=False,
-    help="Show compound information without cut. By default --short is enabled.",
-)
+    help="Show compound information without cutting long strings")
 @pass_storage
-def actualize(storage, compound, short, full):
+def actualize(storage, compound, full):
     """Actualizing compound data from the open source APIs.
 
     This will retreive the information from www.ebi.ac.uk database and store it 
     locally for further use.
 
     Supported compounds are: ADP, ATP, STI, ZID, DPM, XP9, 18W, 29P
-
-    Args:
-        storage: context instance of Storage object
-        compound: string code of compound
     """
+    logging.debug(
+        f"call command actualize(storage={storage}, "
+        f"compound={compound}, full={full})")
+    
     compound = compound.upper().strip()
     if not is_compound_supported(compound):
         not_supported_info(compound)
@@ -218,21 +216,20 @@ def supported():
     for compound in SUPPORTED_COMPOUNDS:
         click.echo('  ' + compound)
 
-
 @cli.command()
 @click.argument("compound")
 @click.option(
-    '--short/--full',
+    '--full',
+    is_flag=True,
     default=False,
-    help="Show compound information without cut. By default --short is enabled.",
-)
+    help="Show compound information without cutting long strings")
 @pass_storage
-def show(storage, compound, short=True):
+def show(storage, compound, full=True):
     """Show compound summary from local data storage."""
     logging.info(f"Showing the summary data for '{compound}' compound")
-    logging.debug(f"call show(storage={storage}, compound={compound}, short={short})...")
+    logging.debug(f"call show(storage={storage}, compound={compound}, full={full})...")
     
-    full_info = not short
+    full_info = bool(full)
     compound = compound.upper().strip()
     if not is_compound_supported(compound):
         not_supported_info(compound)
