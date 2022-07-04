@@ -34,10 +34,26 @@ class Storage(object):
     def __init__(self, debug=False) -> None:
         self.debug = debug
 
-        db_connect_string = os.environ.get('DATABASE_URL')
+        db_connect_string = os.environ.get('DATABASE_URL', None)
         if not db_connect_string:
-            raise RuntimeError('DATABASE_URL is not set at running environment.'
-                'Please set it before cdt use.')
+            # !Warning!
+            # checked in wsl only
+
+            # if connection string is not set, get the first IP of local host
+            cmd = 'hostname -I | cut -d " " -f1'
+            ip = os.popen(cmd).read().strip()
+            
+            USER = 'cdt'
+            PASSWORD = 'cdt'
+            DATABASE = 'compound_data_tool'
+            PORT = 5432
+
+            db_connect_string = \
+                f"postgres://{USER}:{PASSWORD}@{ip}{PORT}/{DATABASE}"
+
+        # if not db_connect_string:
+        #     raise RuntimeError('DATABASE_URL is not set at running environment.'
+        #         'Please set it before cdt use.')
         
         echo = self.debug
         self.engine = create_engine(db_connect_string, echo=echo)

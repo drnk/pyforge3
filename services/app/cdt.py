@@ -243,3 +243,6 @@ def show(storage, compound, full=True):
     else:
         for s in prepare_compound_info(data, full_info):
             click.echo(s)
+
+if __name__ == '__main__':
+    cli()
