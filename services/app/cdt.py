@@ -1,8 +1,23 @@
 import click
 import logging
 import requests
+import sys
+
+from more_itertools import chunked
 
 from storage import CompoundSummary, Storage
+
+
+
+LOGGING_LEVEL = logging.DEBUG
+root = logging.getLogger()
+root.setLevel(LOGGING_LEVEL)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(LOGGING_LEVEL)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
 
 
 SUPPORTED_COMPOUNDS = (
@@ -96,7 +111,7 @@ def get_compound_summary(compound: str) -> dict:
     return parse_compound_summary(r.json())
 
 
-def prepare_compound_info(data: dict) -> list:
+def prepare_compound_info(data: dict, full: bool = False) -> list:
     """Prepare ANSI representation of CompoundSummary data.
     
     Args:
@@ -105,17 +120,41 @@ def prepare_compound_info(data: dict) -> list:
     Returns:
         list of strings to print in ASCII manner into terminal
     """
-    C1_WIDTH = 17
-    C2_WIDTH = 13
+    logging.debug(f"call prepare_compound_info(data={data}, full={full})...")
 
-    TMP = "| {:>17} | {:<13} |"
+    C1_WIDTH = 17
+    if full:
+        C2_WIDTH = 79 - 13 - 7  # 59
+        TMP = "| {:>17} | {:<59} |"
+    else:
+        C2_WIDTH = 13
+        TMP = "| {:>17} | {:<13} |"
+
     s = []
+
+    # table header
     s.append('-'*(2 + C1_WIDTH + 3 + C2_WIDTH + 2))
     s.append(TMP.format('name', 'value'))
     s.append('|' + '-'*(1 + C1_WIDTH + 3 + C2_WIDTH + 1) + '|')
+    
+    # table body
     for k, v in data.items():
         val = str(v)
-        s.append(TMP.format(k, v if len(val) < 14 else f"{val[:10]}..."))
+
+        if not full: 
+            s.append(TMP.format(k, v if len(val) < 14 else f"{val[:10]}..."))
+        else:
+            is_first = True
+            for part in chunked(val, C2_WIDTH):
+                name = k if is_first else ''
+                logging.debug(f"Name = {name}, {type(name)}")
+                logging.debug(f"Part = {part}, {type(part)}")
+                s.append(TMP.format(name, ''.join(part)))
+                
+                if is_first:
+                    is_first = False
+    
+    # table footer
     s.append('-'*(2 + C1_WIDTH + 3 + C2_WIDTH + 2))
     return s
 
@@ -140,8 +179,13 @@ def cli(ctx, verbose):
 
 @cli.command()
 @click.argument("compound")
+@click.option(
+    '--short/--full',
+    default=False,
+    help="Show compound information without cut. By default --short is enabled.",
+)
 @pass_storage
-def actualize(storage, compound):
+def actualize(storage, compound, short, full):
     """Actualizing compound data from the open source APIs.
 
     This will retreive the information from www.ebi.ac.uk database and store it 
@@ -160,7 +204,7 @@ def actualize(storage, compound):
 
     data = get_compound_summary(compound)
 
-    for s in prepare_compound_info(data):
+    for s in prepare_compound_info(data, full):
         click.echo(s)
 
     # storing the info to database
@@ -178,23 +222,27 @@ def supported():
 @cli.command()
 @click.argument("compound")
 @click.option(
-    "--full",
+    '--short/--full',
     default=False,
-    help="Do not cut information in output. Not enabled by default.",
+    help="Show compound information without cut. By default --short is enabled.",
 )
 @pass_storage
-def show(storage, compound, full):
-    logging.info(f"Showing the summary data for {compound}")
+def show(storage, compound, short=True):
+    """Show compound summary from local data storage."""
+    logging.info(f"Showing the summary data for '{compound}' compound")
+    logging.debug(f"call show(storage={storage}, compound={compound}, short={short})...")
     
+    full_info = not short
     compound = compound.upper().strip()
     if not is_compound_supported(compound):
         not_supported_info(compound)
         return
 
     data = storage.get(compound)
+
     if not data:
         click.echo(f"We don't have a local copy of the {compound} summary.")
         click.echo(f"Run `cdt actualize {compound}` once to obtain the info.")
     else:
-        for s in prepare_compound_info(data):
+        for s in prepare_compound_info(data, full_info):
             click.echo(s)
