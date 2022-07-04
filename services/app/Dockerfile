@@ -16,8 +16,8 @@ RUN chown app:app -R .
 
 # upgrade pip and install the dependencies
 RUN python -m pip install --upgrade pip
-COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ./requirements.base.txt /usr/src/app/requirements.base.txt
+RUN pip install --no-cache-dir -r requirements.base.txt
 
 COPY . .
 

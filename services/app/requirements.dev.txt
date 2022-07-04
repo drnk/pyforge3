@@ -1,0 +1,5 @@
+darglint==1.8.1
+ipython==8.4.0
+mypy==0.961
+pytest==7.1.2
+-r requirements.base.txt
