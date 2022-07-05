@@ -1,12 +1,13 @@
 # \[pyforge3\] compound data tool
 
-Compound Data Tool is a useful CLI application which allows you to:
+Compound Data Tool is a fancy and useful CLI application which allows you to:
 * download summary information about compounds from open API resources
 * show the summary information in a fancy way from the local storage
 
 ## Build
 
 ### Prerequisities
+* git
 * Docker
 * docker-compose
 
@@ -21,10 +22,17 @@ Docker Compose version v2.3.4
 ```
 
 ### Build and Run
+
+Checkout the code 
+
 ```bash
 # checkout
 git clone git@github.com:drnk/pyforge3.git pyforge3 && cd pyforge3
+```
 
+Build and run configured containers from the root project directory (where [docker-compose.yml](docker-compose.yml) file located)
+
+```bash
 # build and run
 docker-compose -p pyforge3 build && docker-compose -p pyforge3 up -d
 ```
@@ -71,4 +79,27 @@ app@be94926f743d:/usr/src/app$ cdt actualize 18W
 | cross_links_count | 2             |           
 -------------------------------------           
 app@be94926f743d:/usr/src/app$
+```
+
+## Local Development
+
+For local development you have to obtain Postgres running instance. Update your local [.env.dev](.env.dev) file data.
+
+Another (preferable) option is to run docker PostgreSQL image by:
+```bash
+docker-compose -p pyforge3 build && docker-compose -p pyforge3 up -d
+```
+In that way, connection to database will be established automatically if the PostgreSQL container is running in WSL.
+
+## Prepare environment
+It is highly recommended to use virtual environment for development purposes. Use `pyenv` or `virtual-env` or `venv` or what you like. Activate the environment and install the python packages via `pip`:
+```bash
+python -m pip install -U pip wheel setuptools && pip install -r services/app/requirements.dev.txt
+```
+
+## Testing
+
+For test running use:
+```bash
+pytest -vv -ra --cov=src --cov=storage
 ```
