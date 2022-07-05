@@ -8,14 +8,14 @@ from more_itertools import chunked
 from storage import CompoundSummary, Storage
 
 
-
 LOGGING_LEVEL = logging.DEBUG
 root = logging.getLogger()
 root.setLevel(LOGGING_LEVEL)
 
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(LOGGING_LEVEL)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter_mask = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+formatter = logging.Formatter(formatter_mask)
 handler.setFormatter(formatter)
 root.addHandler(handler)
 
@@ -24,7 +24,9 @@ SUPPORTED_COMPOUNDS = (
     'ADP', 'ATP', 'STI', 'ZID', 'DPM', 'XP9', '18W', '29P'
 )
 
-EBI_COMPOUND_SUMMARY_URL = 'https://www.ebi.ac.uk/pdbe/graph-api/compound/summary/{hetcode}'
+EBI_COMPOUND_SUMMARY_URL = \
+    'https://www.ebi.ac.uk/pdbe/' \
+    'graph-api/compound/summary/{hetcode}'
 
 
 def parse_compound_summary(data: dict) -> dict:
@@ -49,35 +51,41 @@ def parse_compound_summary(data: dict) -> dict:
 
     return res
 
+
 def is_compound_supported(hetcode: str) -> bool:
     """Check if compound supported by `cdt`
-    
+
     Args:
         hetcode: string code of compound
-        
+
     Returns:
         True is supported and False if not
     """
     return hetcode in SUPPORTED_COMPOUNDS
 
+
 def not_supported_info(hetcode: str) -> None:
     """Printing into terminal warning about unsupported compound.
-    
+
     Args:
         hetcode: string code of compound
     """
-    click.echo(click.style(f"Compound {hetcode} is not supported", bg='red', fg='white'))
+    click.echo(
+        click.style(
+            f"Compound {hetcode} is not supported",
+            bg='red', fg='white'))
     click.echo(f"Supported compounds are: {', '.join(SUPPORTED_COMPOUNDS)}")
+
 
 def get_compound_summary(compound: str) -> dict:
     """Downloads compound summary info from PDB (Protein Data Bank) API
 
     For the reference:
         https://www.ebi.ac.uk/pdbe/graph-api/pdbe_doc/#api-Compounds-GetCompoundSummary
-    
+
     Args:
-        compound: hetcode of the compound 
-    
+        compound: hetcode of the compound
+
     Returns:
         dict object with following keys:
             compound - Hetcode of the compound.
@@ -89,23 +97,25 @@ def get_compound_summary(compound: str) -> dict:
                 (could be multiple).
             cross_links_count - Quantity of cross references for this
                 chemical component from other resources.
-    
+
     Raises:
         ValueError: if 'compound' is not supported
-        RuntimeError: if wearn't able to retreive information from 
-            public API 
+        RuntimeError: if wearn't able to retreive information from
+            public API
 
     """
     compound = compound.upper().strip()
 
     if not is_compound_supported(compound):
-        raise ValueError(f"Compound '{compound}' is not supported yet. "\
+        raise ValueError(
+            f"Compound '{compound}' is not supported yet. "
             f"Please try supported ones: {str(SUPPORTED_COMPOUNDS)}")
 
     url = EBI_COMPOUND_SUMMARY_URL.format(hetcode=compound)
     r = requests.get(url)
     if r.status_code != 200:
-        raise RuntimeError(f"Something goes wrong while retreiving "\
+        raise RuntimeError(
+            f"Something goes wrong while retreiving "
             f"information via url: {url}")
 
     return parse_compound_summary(r.json())
@@ -113,10 +123,11 @@ def get_compound_summary(compound: str) -> dict:
 
 def prepare_compound_info(data: dict, full: bool = False) -> list:
     """Prepare ANSI representation of CompoundSummary data.
-    
+
     Args:
         data: compound summary dictionary
-        
+        full: boolean flag forcing show the infor uncut
+
     Returns:
         list of strings to print in ASCII manner into terminal
     """
@@ -136,22 +147,22 @@ def prepare_compound_info(data: dict, full: bool = False) -> list:
     s.append('-'*(2 + C1_WIDTH + 3 + C2_WIDTH + 2))
     s.append(TMP.format('name', 'value'))
     s.append('|' + '-'*(1 + C1_WIDTH + 3 + C2_WIDTH + 1) + '|')
-    
+
     # table body
     for k, v in data.items():
         val = str(v)
 
-        if not full: 
+        if not full:
             s.append(TMP.format(k, v if len(val) < 14 else f"{val[:10]}..."))
         else:
             is_first = True
             for part in chunked(val, C2_WIDTH):
                 name = k if is_first else ''
                 s.append(TMP.format(name, ''.join(part)))
-                
+
                 if is_first:
                     is_first = False
-    
+
     # table footer
     s.append('-'*(2 + C1_WIDTH + 3 + C2_WIDTH + 2))
     return s
@@ -160,6 +171,7 @@ def prepare_compound_info(data: dict, full: bool = False) -> list:
 # prepare decorator via click to pass Storage
 # instance as a context object to the commands
 pass_storage = click.make_pass_decorator(Storage)
+
 
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enables verbose mode.")
@@ -175,6 +187,7 @@ def cli(ctx, verbose):
     """
     ctx.obj = Storage(debug=verbose)
 
+
 @cli.command()
 @click.argument("compound")
 @click.option(
@@ -186,15 +199,15 @@ def cli(ctx, verbose):
 def actualize(storage, compound, full):
     """Actualizing compound data from the open source APIs.
 
-    This will retreive the information from www.ebi.ac.uk database and store it 
-    locally for further use.
+    This will retreive the information from www.ebi.ac.uk database
+    and store it locally for further use.
 
     Supported compounds are: ADP, ATP, STI, ZID, DPM, XP9, 18W, 29P
     """
     logging.debug(
         f"call command actualize(storage={storage}, "
         f"compound={compound}, full={full})")
-    
+
     compound = compound.upper().strip()
     if not is_compound_supported(compound):
         not_supported_info(compound)
@@ -209,12 +222,14 @@ def actualize(storage, compound, full):
     summary = CompoundSummary(**data)
     storage.save(summary)
 
+
 @cli.command()
 def supported():
     """Information about supported compounds."""
     click.echo("Next compounds are supported by cdt:")
     for compound in SUPPORTED_COMPOUNDS:
         click.echo('  ' + compound)
+
 
 @cli.command()
 @click.argument("compound")
@@ -227,8 +242,9 @@ def supported():
 def show(storage, compound, full=True):
     """Show compound summary from local data storage."""
     logging.info(f"Showing the summary data for '{compound}' compound")
-    logging.debug(f"call show(storage={storage}, compound={compound}, full={full})...")
-    
+    logging.debug(f"call show(storage={storage}, compound={compound}, "
+                  f"full={full})...")
+
     full_info = bool(full)
     compound = compound.upper().strip()
     if not is_compound_supported(compound):
@@ -243,6 +259,7 @@ def show(storage, compound, full=True):
     else:
         for s in prepare_compound_info(data, full_info):
             click.echo(s)
+
 
 if __name__ == '__main__':
     cli()
