@@ -2,6 +2,7 @@ from click.testing import CliRunner
 import pytest
 
 from src import cdt as cdt
+from src.cdt import SUPPORTED_COMPOUNDS
 
 
 @pytest.fixture(scope="module")
@@ -81,3 +82,16 @@ def test_actualize_empty(runner):
     assert result.exit_code == 2
     expected_ending = "Error: Missing argument 'COMPOUND'."
     assert result.output.strip().split('\n').pop() == expected_ending
+
+
+def test_supported(runner):
+    result = runner.invoke(
+        cdt.cli, ['supported']
+    )
+
+    expected_strings = set(SUPPORTED_COMPOUNDS)
+    expected_strings.add('Next compounds are supported by cdt:')
+
+    output_set = set([s.strip() for s in result.output.split('\n') if s.strip()])
+    assert result.exit_code == 0
+    assert output_set == expected_strings
