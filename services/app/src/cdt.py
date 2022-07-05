@@ -71,9 +71,7 @@ def not_supported_info(hetcode: str) -> None:
         hetcode: string code of compound
     """
     click.echo(
-        click.style(
-            f"Compound {hetcode} is not supported",
-            bg='red', fg='white'))
+        click.style(f"Compound {hetcode} is not supported"))
     click.echo(f"Supported compounds are: {', '.join(SUPPORTED_COMPOUNDS)}")
 
 

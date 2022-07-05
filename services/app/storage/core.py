@@ -49,7 +49,7 @@ class Storage(object):
             PORT = 5432
 
             db_connect_string = \
-                f"postgres://{USER}:{PASSWORD}@{ip}{PORT}/{DATABASE}"
+                f"postgresql://{USER}:{PASSWORD}@{ip}:{PORT}/{DATABASE}"
 
         # if not db_connect_string:
         #     raise RuntimeError(
@@ -75,8 +75,6 @@ class Storage(object):
             create_database(self.engine.url)
 
         Base = declarative_base()
-        # Base.metadata.drop_all()
-        # Base.metadata.create_all()
 
         table_name = CompoundSummary.__tablename__
         eng = self.engine
