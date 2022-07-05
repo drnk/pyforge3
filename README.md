@@ -6,6 +6,8 @@ Compound Data Tool is a fancy and useful CLI application which allows you to:
 
 ## Build
 
+> :warning: **All below commands are running from the project root directory**
+
 ### Prerequisities
 * git
 * Docker
@@ -23,7 +25,7 @@ Docker Compose version v2.3.4
 
 ### Build and Run
 
-Checkout the code 
+Checkout the code:
 
 ```bash
 # checkout
@@ -91,15 +93,27 @@ docker-compose -p pyforge3 build && docker-compose -p pyforge3 up -d
 ```
 In that way, connection to database will be established automatically if the PostgreSQL container is running in WSL.
 
-## Prepare environment
+### Prepare environment
 It is highly recommended to use virtual environment for development purposes. Use `pyenv` or `virtual-env` or `venv` or what you like. Activate the environment and install the python packages via `pip`:
 ```bash
 python -m pip install -U pip wheel setuptools && pip install -r services/app/requirements.dev.txt
 ```
 
-## Testing
+### Testing
 
 For test running use:
 ```bash
 pytest -vv -ra --cov=src --cov=storage
+```
+
+### Run
+
+For convinient use of `cdt` tool from command line install it as a package:
+```bash
+pip install --editable services/app
+```
+
+After that you are able to use `cdt`. For example:
+```bash
+cdt supported
 ```
