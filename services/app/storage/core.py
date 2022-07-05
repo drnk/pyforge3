@@ -10,12 +10,12 @@ from .models import CompoundSummary
 
 def row2dict(row) -> dict:
     """Converting Row (SQLAlchemy) into dictionary.
-    
+
     Args:
         row: instance of SQLAlchemy Row
 
     Returns:
-        dict where keys are column names and values are field values 
+        dict where keys are column names and values are field values
     """
     d = {}
     for column in row.__table__.c:
@@ -42,7 +42,7 @@ class Storage(object):
             # if connection string is not set, get the first IP of local host
             cmd = 'hostname -I | cut -d " " -f1'
             ip = os.popen(cmd).read().strip()
-            
+
             USER = 'cdt'
             PASSWORD = 'cdt'
             DATABASE = 'compound_data_tool'
@@ -52,22 +52,23 @@ class Storage(object):
                 f"postgres://{USER}:{PASSWORD}@{ip}{PORT}/{DATABASE}"
 
         # if not db_connect_string:
-        #     raise RuntimeError('DATABASE_URL is not set at running environment.'
-        #         'Please set it before cdt use.')
-        
+        #     raise RuntimeError(
+        #         'DATABASE_URL is not set at running '
+        #         'environment. Please set it before cdt use.')
+
         echo = self.debug
         self.engine = create_engine(db_connect_string, echo=echo)
 
         self.Session = sessionmaker(bind=self.engine)
         logging.debug(f"Session object initiated: {self.Session}")
 
-        logging.debug(f"Create database and tables if needed...")
+        logging.debug("Create database and tables if needed...")
         self._create_db()
 
     def _create_db(self) -> None:
         """Prepare database structures if they are missing:
             * database (declared within DATABASE_URL) env var if it is
-            * data tables 
+            * data tables
         """
         if not database_exists(self.engine.url):
             logging.info('Creating database...')
@@ -82,13 +83,13 @@ class Storage(object):
 
         table_exists = inspect(eng).has_table(table_name)
         if not table_exists:  # If table don't exist, Create.
-            logging.debug(f"Creating database tables "\
-                f"because {table_name} doesn't exists.")
+            logging.debug(f"Creating database tables "
+                          f"because {table_name} doesn't exists.")
             Base.metadata.create_all(eng, tables=[CompoundSummary.__table__])
-    
+
     def save(self, summary: CompoundSummary) -> None:
         """Saving compound summary to database.
-        
+
         Args:
             summary: instance of CompoundSummary
         """
@@ -99,7 +100,7 @@ class Storage(object):
 
     def get(self, compound: str) -> CompoundSummary:
         """Retreiving compound summary from database.
-        
+
         Args:
             compound: hetcode of desired compound
 
@@ -110,11 +111,8 @@ class Storage(object):
             where(CompoundSummary.compound == compound)
         with self.Session() as sess:
             row = sess.scalars(stmt).first()
-            
+
             if row:
                 return row2dict(row)
             else:
                 return None
-
-        
-

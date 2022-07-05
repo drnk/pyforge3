@@ -9,7 +9,7 @@ Base = declarative_base()
 class CompoundSummary(Base):
     __tablename__ = 'compounds_summary'
 
-    compound = Column(String, primary_key = True)
+    compound = Column(String, primary_key=True)
     name = Column(String)
     formula = Column(String)
     inchi = Column(String)
@@ -23,4 +23,3 @@ class CompoundSummary(Base):
 
     def __str__(self):
         return f"CompoundSummary({self.compound})"
-
