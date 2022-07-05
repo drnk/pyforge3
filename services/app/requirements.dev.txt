@@ -1,5 +1,6 @@
 darglint==1.8.1
 ipython==8.4.0
+flake8==4.0.1
 mypy==0.961
 pytest==7.1.2
 pytest-cov==3.0.0
