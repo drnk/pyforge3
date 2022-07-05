@@ -26,7 +26,7 @@ Docker Compose version v2.3.4
 git clone git@github.com:drnk/pyforge3.git pyforge3 && cd pyforge3
 
 # build and run
-docker-compose build && docker-compose up -d
+docker-compose -p pyforge3 build && docker-compose -p pyforge3 up -d
 ```
 
 ### Use
