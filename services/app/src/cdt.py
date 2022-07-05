@@ -4,6 +4,7 @@ import requests
 import sys
 
 from more_itertools import chunked
+from time import sleep
 
 from storage import CompoundSummary, Storage
 
@@ -20,6 +21,8 @@ handler.setFormatter(formatter)
 root.addHandler(handler)
 
 
+DOWNLOAD_DELAY = 1.0
+
 SUPPORTED_COMPOUNDS = (
     'ADP', 'ATP', 'STI', 'ZID', 'DPM', 'XP9', '18W', '29P'
 )
@@ -27,6 +30,14 @@ SUPPORTED_COMPOUNDS = (
 EBI_COMPOUND_SUMMARY_URL = \
     'https://www.ebi.ac.uk/pdbe/' \
     'graph-api/compound/summary/{hetcode}'
+
+
+def delay_one_second(func):
+    # Decorator for sleeping a while before execution
+    def wrapper(*args, **kwargs):
+        sleep(DOWNLOAD_DELAY)
+        return func(*args, **kwargs)
+    return wrapper
 
 
 def parse_compound_summary(data: dict) -> dict:
@@ -75,6 +86,7 @@ def not_supported_info(hetcode: str) -> None:
     click.echo(f"Supported compounds are: {', '.join(SUPPORTED_COMPOUNDS)}")
 
 
+@delay_one_second
 def get_compound_summary(compound: str) -> dict:
     """Downloads compound summary info from PDB (Protein Data Bank) API
 
