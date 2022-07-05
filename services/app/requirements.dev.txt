@@ -2,6 +2,6 @@ darglint==1.8.1
 ipython==8.4.0
 mypy==0.961
 pytest==7.1.2
-pytest-cov=3.0.0
-pytest-sugar=0.9.4
+pytest-cov==3.0.0
+pytest-sugar==0.9.4
 -r requirements.base.txt
