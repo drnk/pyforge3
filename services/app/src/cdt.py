@@ -9,16 +9,25 @@ from time import sleep
 from storage import CompoundSummary, Storage
 
 
-LOGGING_LEVEL = logging.DEBUG
-root = logging.getLogger()
-root.setLevel(LOGGING_LEVEL)
+# logging configuration - begin
+DEF_LOGGING_CONSOLE_LEVEL = logging.ERROR
+DEF_LOGGING_FILE_LEVEL = logging.DEBUG
+FORMATTER_MASK = '%(asctime)s - [%(name)s] - [%(levelname)s] - %(message)s'
 
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(LOGGING_LEVEL)
-formatter_mask = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-formatter = logging.Formatter(formatter_mask)
-handler.setFormatter(formatter)
-root.addHandler(handler)
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+log_formatter = logging.Formatter(FORMATTER_MASK)
+
+file_handler = logging.FileHandler('console.log')
+file_handler.setFormatter(log_formatter)
+file_handler.setLevel(DEF_LOGGING_FILE_LEVEL)
+root_logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(log_formatter)
+console_handler.setLevel(DEF_LOGGING_CONSOLE_LEVEL)
+root_logger.addHandler(console_handler)
+# logging configuration - end
 
 
 DOWNLOAD_DELAY = 1.0
@@ -189,7 +198,10 @@ pass_storage = click.make_pass_decorator(Storage)
 
 
 @click.group()
-@click.option("--verbose", "-v", is_flag=True, help="Enables verbose mode.")
+@click.option(
+    "--verbose", "-v",
+    is_flag=True,
+    help="Enables verbose mode which produces additional import to console.")
 @click.version_option("1.0")
 @click.pass_context
 def cli(ctx, verbose):
@@ -201,6 +213,8 @@ def cli(ctx, verbose):
         verbose: boolean value of additional output necessity
     """
     ctx.obj = Storage(debug=verbose)
+    if verbose:
+        console_handler.setLevel(logging.DEBUG)
 
 
 @cli.command()
