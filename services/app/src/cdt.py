@@ -299,12 +299,12 @@ def ls(storage):
     logging.debug(f"COMMAND `ls`(storage={storage})")
 
     header_printed = False
-    TMP = " {:<3} | {:<}"
+    TMP = "| {:^4} | {:<26} |"
     for info in storage.list():
         if not header_printed:
-            click.echo("-"*(5+1+27))
-            click.echo("name | updated_at")
-            click.echo("-"*5 + '+' + '-'*27)
+            click.echo("-"*37)
+            click.echo(TMP.format('name', 'updated_at'))
+            click.echo("|" + "-"*6 + "+" + "-"*28 + "|")
             header_printed = True
 
         click.echo(TMP.format(info[0], info[1]))
@@ -315,6 +315,8 @@ def ls(storage):
             "Local database is empty. Nothing to show. "
             "Please download compound summary via `cdt actualize` "
             "command and try again")
+    else:
+        click.echo("-"*37)
 
 
 @cli.command()
