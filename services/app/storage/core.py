@@ -1,7 +1,7 @@
 import logging
 import os
 
-from sqlalchemy import create_engine, inspect, select, delete
+from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
@@ -132,7 +132,7 @@ class Storage(object):
 
     def remove(self, compound: str) -> None:
         """Delete information about 'compound' from local database
-        
+
         Args:
             compound: string hetcode of compound
 

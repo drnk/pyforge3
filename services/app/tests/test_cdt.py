@@ -20,7 +20,7 @@ def unsupported_compound():
     return 'WWW'
 
 
-def test_actualize_atp(runner, common_compound):
+def test_actualize_common(runner, common_compound):
     result = runner.invoke(cdt.cli, ['actualize', common_compound])
 
     assert result.exit_code == 0
@@ -38,7 +38,7 @@ def test_actualize_atp(runner, common_compound):
 """
 
 
-def test_actualize_full_atp(runner, common_compound):
+def test_actualize_common_full(runner, common_compound):
     result = runner.invoke(
         cdt.cli, ['actualize', '--full', common_compound])
 
@@ -95,3 +95,24 @@ def test_supported(runner):
     output_set = set([s.strip() for s in result.output.split('\n') if s.strip()])
     assert result.exit_code == 0
     assert output_set == expected_strings
+
+
+def test_remove_common(runner, common_compound):
+    # actualize the information about compound
+    result = runner.invoke(cdt.cli, ['actualize', common_compound])
+    assert result.exit_code == 0
+
+    # check that summary is present at local db
+    result = runner.invoke(cdt.cli, ['ls'])
+    assert common_compound in result.output
+
+    # remove the compound summary from local db
+    result = runner.invoke(cdt.cli, ['remove', common_compound])
+    expected = f"Compound {common_compound} succesfully removed."
+    assert result.output.strip() == expected
+
+    # try again to remove the same compound from local db
+    result = runner.invoke(cdt.cli, ['remove', common_compound])
+    expected = f"Compound {common_compound} summary is missing "\
+        "in local database. Nothing to remove."
+    assert result.output.strip() == expected

@@ -297,7 +297,8 @@ def ls(storage):
 
     if not header_printed:
         # means that no result
-        click.echo("Local database is empty. Nothing to show. "
+        click.echo(
+            "Local database is empty. Nothing to show. "
             "Please download compound summary via `cdt actualize` "
             "command and try again")
 
@@ -316,7 +317,6 @@ def remove(storage, compound):
         click.echo(f"Compound {compound} summary is missing in "
                    "local database. Nothing to remove.")
 
-    
 
 if __name__ == '__main__':
     cli()
