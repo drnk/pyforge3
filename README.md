@@ -4,6 +4,8 @@ Compound Data Tool is a fancy and useful CLI application which allows you to:
 * download summary information about compounds from open API resources
 * show the summary information in a fancy way from the local storage
 
+---
+
 ## Build
 
 > :warning: **All below commands are running from the project root directory**
@@ -83,6 +85,7 @@ app@be94926f743d:/usr/src/app$ cdt actualize 18W
 app@be94926f743d:/usr/src/app$
 ```
 
+---
 ## Local Development
 
 For local development you have to obtain Postgres running instance. Update your local [.env.dev](.env.dev) file data.

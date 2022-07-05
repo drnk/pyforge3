@@ -1,7 +1,7 @@
 import logging
 import os
 
-from sqlalchemy import create_engine, inspect, select
+from sqlalchemy import create_engine, inspect, select, delete
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
@@ -114,3 +114,36 @@ class Storage(object):
                 return row2dict(row)
             else:
                 return None
+
+    def list(self) -> tuple:
+        """Provide information about data stored in local database
+
+        Yields:
+            tuple where each element is a tuple of two values:
+                * compound name (str)
+                * datetime of update in database (datetime)
+        """
+        with self.Session() as sess:
+            results = sess.query(
+                CompoundSummary.compound, CompoundSummary.updated)
+
+            for c, d in results:
+                yield (c, d.isoformat())
+
+    def remove(self, compound: str) -> None:
+        """Delete information about 'compound' from local database
+        
+        Args:
+            compound: string hetcode of compound
+
+        Returns:
+            result of SQLAlchemy statment execution
+        """
+        with self.Session() as sess:
+
+            affected_rows = sess.query(CompoundSummary).\
+                filter(CompoundSummary.compound == compound).\
+                delete(synchronize_session=False)
+
+            sess.commit()
+            return affected_rows

@@ -40,6 +40,11 @@ def delay_one_second(func):
     return wrapper
 
 
+def prepare_compound_hetcode(compound: str):
+
+    return compound.strip().upper()
+
+
 def parse_compound_summary(data: dict) -> dict:
     """Filters summary data to leave the necessary only.
 
@@ -215,7 +220,7 @@ def actualize(storage, compound, full):
     Supported compounds are: ADP, ATP, STI, ZID, DPM, XP9, 18W, 29P
     """
     logging.debug(
-        f"call command actualize(storage={storage}, "
+        f"COMMAND actualize(storage={storage}, "
         f"compound={compound}, full={full})")
 
     compound = compound.upper().strip()
@@ -236,6 +241,8 @@ def actualize(storage, compound, full):
 @cli.command()
 def supported():
     """Information about supported compounds."""
+    logging.debug("COMMAND supported()")
+
     click.echo("Next compounds are supported by cdt:")
     for compound in SUPPORTED_COMPOUNDS:
         click.echo('  ' + compound)
@@ -252,8 +259,8 @@ def supported():
 def show(storage, compound, full=True):
     """Show compound summary from local data storage."""
     logging.info(f"Showing the summary data for '{compound}' compound")
-    logging.debug(f"call show(storage={storage}, compound={compound}, "
-                  f"full={full})...")
+    logging.debug(f"COMMAND show(storage={storage}, compound={compound}, "
+                  f"full={full})")
 
     full_info = bool(full)
     compound = compound.upper().strip()
@@ -270,6 +277,46 @@ def show(storage, compound, full=True):
         for s in prepare_compound_info(data, full_info):
             click.echo(s)
 
+
+@cli.command()
+@pass_storage
+def ls(storage):
+    """Show list of compounds available from local storage."""
+    logging.debug(f"COMMAND `ls`(storage={storage})")
+
+    header_printed = False
+    TMP = " {:<3} | {:<}"
+    for info in storage.list():
+        if not header_printed:
+            click.echo("-"*(5+1+27))
+            click.echo("name | updated_at")
+            click.echo("-"*5 + '+' + '-'*27)
+            header_printed = True
+
+        click.echo(TMP.format(info[0], info[1]))
+
+    if not header_printed:
+        # means that no result
+        click.echo("Local database is empty. Nothing to show. "
+            "Please download compound summary via `cdt actualize` "
+            "command and try again")
+
+
+@cli.command()
+@click.argument("compound")
+@pass_storage
+def remove(storage, compound):
+    """Remove compounds summary from local storage."""
+    logging.debug(f"COMMAND `remove`(storage={storage}, compound={compound})")
+
+    compound = prepare_compound_hetcode(compound)
+    if storage.remove(compound):
+        click.echo(f"Compound {compound} succesfully removed.")
+    else:
+        click.echo(f"Compound {compound} summary is missing in "
+                   "local database. Nothing to remove.")
+
+    
 
 if __name__ == '__main__':
     cli()
