@@ -308,7 +308,7 @@ def ls(storage):  # pylint: disable=invalid-name
 
     header_printed = False
     str_template = '| {:^4} | {:<26} |'
-    for info in storage.list():
+    for info in storage.listing():
         if not header_printed:
             click.echo('-'*37)
             click.echo(str_template.format('name', 'updated_at'))

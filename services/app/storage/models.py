@@ -9,6 +9,7 @@ Base = declarative_base()
 
 class CompoundSummary(Base):
     """CompoundSummary model."""
+
     __tablename__ = 'compounds_summary'
 
     compound = Column(String, primary_key=True)
@@ -18,10 +19,12 @@ class CompoundSummary(Base):
     inchi_key = Column(String)
     smiles = Column(String)
     cross_links_count = Column(Integer)
-    updated = Column(
-        DateTime,
-        server_default=func.now()
-    )
+    updated = Column(DateTime, server_default=func.now())
 
-    def __str__(self):
-        return f"CompoundSummary({self.compound})"
+    def __str__(self) -> str:
+        """Return string representation.
+
+        Returns:
+            string representation of CompoundSummary instance.
+        """
+        return f'CompoundSummary({self.compound})'

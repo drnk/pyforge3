@@ -10,7 +10,7 @@ from .models import CompoundSummary
 
 
 def row2dict(row) -> dict:
-    """Converting Row (SQLAlchemy) into dictionary.
+    """Convert Row (SQLAlchemy) into dictionary.
 
     Args:
         row: instance of SQLAlchemy Row
@@ -25,14 +25,20 @@ def row2dict(row) -> dict:
     return result_dict
 
 
-class Storage(object):
-    """Storage class implements database integration layer
+class Storage():
+    """Storage class implements database integration layer.
 
     While initiating, constructor is getting environment
     variable 'DATABASE_URL' which expect to contain connection
     string to database.
     """
+
     def __init__(self, debug=False) -> None:
+        """Storage instance constructor.
+
+        Args:
+            debug: enables additional output.
+        """
         self.debug = debug
 
         db_connect_string = os.environ.get('DATABASE_URL', None)
@@ -67,7 +73,9 @@ class Storage(object):
         self._create_db()
 
     def _create_db(self) -> None:
-        """Prepare database structures if they are missing:
+        """Prepare database structures.
+
+        Creates, if they are missing:
             * database (declared within DATABASE_URL) env var if it is
             * data tables
         """
@@ -83,11 +91,11 @@ class Storage(object):
         table_exists = inspect(eng).has_table(table_name)
         if not table_exists:  # If table don't exist, Create.
             logging.debug(f'Creating database tables '
-                          f'because {table_name} doesn\'t exists.')
+                          f"because {table_name} doesn't exists.")
             Base.metadata.create_all(eng, tables=[CompoundSummary.__table__])
 
     def save(self, summary: CompoundSummary) -> None:
-        """Saving compound summary to database.
+        """Save compound summary to database.
 
         Args:
             summary: instance of CompoundSummary
@@ -110,14 +118,13 @@ class Storage(object):
             where(CompoundSummary.compound == compound)
         with self.Session() as sess:
             row = sess.scalars(stmt).first()
-
             if row:
                 return row2dict(row)
-            else:
-                return None
 
-    def list(self) -> tuple:
-        """Provide information about data stored in local database
+        return None
+
+    def listing(self) -> tuple:
+        """Provide information about data stored in local database.
 
         Yields:
             tuple where each element is a tuple of two values:
@@ -132,7 +139,7 @@ class Storage(object):
                 yield (compound, updated_at.isoformat())
 
     def remove(self, compound: str) -> None:
-        """Delete information about 'compound' from local database
+        """Delete information about 'compound' from local database.
 
         Args:
             compound: string hetcode of compound
