@@ -33,7 +33,7 @@ def test_actualize_common(runner, common_compound):
 |             inchi | InChI=1S/C... |
 |         inchi_key | ZKHQWZAMYR... |
 |            smiles | c1nc(c2c(n... |
-| cross_links_count | 22            |
+| cross_links_count | 23            |
 -------------------------------------
 """
 
@@ -56,7 +56,7 @@ def test_actualize_common_full(runner, common_compound):
 |         inchi_key | ZKHQWZAMYRWXGA-KQYNXXCUSA-N                                 |
 |            smiles | c1nc(c2c(n1)n(cn2)C3C(C(C(O3)COP(=O)(O)OP(=O)(O)OP(=O)(O)O) |
 |                   | O)O)N                                                       |
-| cross_links_count | 22                                                          |
+| cross_links_count | 23                                                          |
 -----------------------------------------------------------------------------------
 """
     assert result.output == expected
