@@ -1,3 +1,4 @@
+"""SQLAlchemy models for Storage module."""
 from sqlalchemy import Column, String, Integer, DateTime
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
@@ -7,6 +8,7 @@ Base = declarative_base()
 
 
 class CompoundSummary(Base):
+    """CompoundSummary model."""
     __tablename__ = 'compounds_summary'
 
     compound = Column(String, primary_key=True)

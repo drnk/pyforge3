@@ -1,3 +1,4 @@
+"""Core of Storage module."""
 import logging
 import os
 
@@ -17,11 +18,11 @@ def row2dict(row) -> dict:
     Returns:
         dict where keys are column names and values are field values
     """
-    d = {}
+    result_dict = {}
     for column in row.__table__.c:
-        d[column.name] = str(getattr(row, column.name))
+        result_dict[column.name] = str(getattr(row, column.name))
 
-    return d
+    return result_dict
 
 
 class Storage(object):
@@ -41,15 +42,15 @@ class Storage(object):
 
             # if connection string is not set, get the first IP of local host
             cmd = 'hostname -I | cut -d " " -f1'
-            ip = os.popen(cmd).read().strip()
+            hostip = os.popen(cmd).read().strip()
 
-            USER = 'cdt'
-            PASSWORD = 'cdt'
-            DATABASE = 'compound_data_tool'
-            PORT = 5432
+            user = 'cdt'
+            password = 'cdt'
+            database = 'compound_data_tool'
+            port = 5432
 
             db_connect_string = \
-                f"postgresql://{USER}:{PASSWORD}@{ip}:{PORT}/{DATABASE}"
+                f'postgresql://{user}:{password}@{hostip}:{port}/{database}'
 
         # if not db_connect_string:
         #     raise RuntimeError(
@@ -60,9 +61,9 @@ class Storage(object):
         self.engine = create_engine(db_connect_string, echo=echo)
 
         self.Session = sessionmaker(bind=self.engine)
-        logging.debug(f"Session object initiated: {self.Session}")
+        logging.debug(f'Session object initiated: {self.Session}')
 
-        logging.debug("Create database and tables if needed...")
+        logging.debug('Create database and tables if needed...')
         self._create_db()
 
     def _create_db(self) -> None:
@@ -81,8 +82,8 @@ class Storage(object):
 
         table_exists = inspect(eng).has_table(table_name)
         if not table_exists:  # If table don't exist, Create.
-            logging.debug(f"Creating database tables "
-                          f"because {table_name} doesn't exists.")
+            logging.debug(f'Creating database tables '
+                          f'because {table_name} doesn\'t exists.')
             Base.metadata.create_all(eng, tables=[CompoundSummary.__table__])
 
     def save(self, summary: CompoundSummary) -> None:
@@ -91,7 +92,7 @@ class Storage(object):
         Args:
             summary: instance of CompoundSummary
         """
-        logging.debug(f"Saving {summary} to the database")
+        logging.debug(f'Saving {summary} to the database')
         with self.Session() as sess:
             sess.merge(summary)
             sess.commit()
@@ -127,8 +128,8 @@ class Storage(object):
             results = sess.query(
                 CompoundSummary.compound, CompoundSummary.updated)
 
-            for c, d in results:
-                yield (c, d.isoformat())
+            for compound, updated_at in results:
+                yield (compound, updated_at.isoformat())
 
     def remove(self, compound: str) -> None:
         """Delete information about 'compound' from local database
